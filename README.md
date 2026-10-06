@@ -32,7 +32,7 @@ Female CEOs aren't randomly assigned, since they're more common in some industri
 2. **Balance check:** verified that matched groups are comparable using a love plot and propensity score distributions.
 3. **Regression on the matched sample:** OLS of EBITDA margin on female CEO plus controls. A second model adds a *Female × Financial Sector* interaction.
 
-<img width="699" height="433" alt="image" src="https://github.com/user-attachments/assets/fb82b40c-cf59-41d6-9f7e-d3d4e7152a26" /> <img width="687" height="407" alt="image" src="https://github.com/user-attachments/assets/b6789234-46d5-4702-b60b-06a164fe2058" />
+<p align="center"> <img width="699" height="433" alt="image" src="https://github.com/user-attachments/assets/fb82b40c-cf59-41d6-9f7e-d3d4e7152a26" /> <img width="687" height="407" alt="image" src="https://github.com/user-attachments/assets/b6789234-46d5-4702-b60b-06a164fe2058" /> </p>
 
 *Left: matching closes the propensity score gap between groups. Right: matched treated and control firms have similar propensity score distributions.*
 
