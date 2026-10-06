@@ -1,0 +1,83 @@
+---
+title: "Analysis week 11"
+author: "Nicky Punt"
+date: "April 8, 2026"
+output: html_document
+---
+**Preparing data**
+```{r}
+# Setup chunk - set CRAN mirror and load packages
+options(repos = c(CRAN = "https://cran.rstudio.com/"))
+
+library(readxl)
+library(MatchIt)
+library(dplyr)
+library(cobalt)
+```
+
+```{r}
+# Read in the data first
+ceo <- read_xlsx("C:/Users/Nicky/OneDrive/Bucknell University/Spring 2026/ECON 441/Research Assignment/S&P 500 data set.xlsx", n_max = 476)
+```
+
+```{r}
+# Rename columns
+names(ceo) <- c("company_full", "company", "exchange", "ticker",
+               "index", "industry", "financial_sector",
+               "employees", "female_ceo_name", "ceo_name",
+               "female_ceo", "year_founded", "company_age",
+               "hq", "california", "mcap",
+               "enterprise_value", "ebitda", "ev_ebitda",
+               "revenue", "ebitda_margin")
+```
+
+```{r}
+# log of revenue
+ceo$lrevenue <- log(ceo$revenue)
+
+# log of employees
+ceo$employees <- as.numeric(ceo$employees) # first have to make the variable to be numeric
+ceo$lemployees <- log(ceo$employees)
+
+# log of market capitalization
+ceo$lmcap <- log(ceo$mcap)
+```
+
+
+
+
+**Matching Model Analysis**
+
+```{r}
+ceo_clean <- na.omit(ceo[, c("ebitda_margin", "female_ceo", "lmcap", "california", "lrevenue", "lemployees", "company_age", "financial_sector", "industry")])
+```
+
+
+```{r}
+match_vars <- c("lrevenue", "lemployees", "lmcap", "financial_sector", "california", "company_age")
+
+match <- matchit(female_ceo ~ lrevenue + lemployees + company_age + financial_sector + california,
+        data = ceo_clean, 
+        method = "nearest", 
+        distance = "logit", 
+        ratio = 3, 
+        replace = FALSE)
+summary(match)
+```
+
+```{r}
+love.plot(match, threshold = 0.05)
+bal.tab(match, thresholds = c(m = 0.05))
+```
+
+```{r}
+matched_ceo <- match.data(match)
+```
+
+```{r}
+matched_model <- lm(ebitda_margin ~ female_ceo + lrevenue + lemployees + company_age + financial_sector + california, 
+        data = matched_ceo)
+summary(matched_model)
+```
+
+

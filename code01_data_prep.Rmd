@@ -1,0 +1,101 @@
+---
+title: "S&P"
+output:
+  pdf_document: default
+  html_document: default
+---
+```{r}
+# rename columns
+names(ceo) <- c("company_full", "company", "exchange", "ticker",
+               "index", "industry", "financial_sector",
+               "employees", "female_ceo_name", "ceo_name",
+               "female_ceo", "year_founded", "company_age",
+               "hq", "california", "market_cap",
+               "enterprise_value", "ebitda", "ev_ebitda",
+               "revenue", "ebitda_margin")
+
+# Convert to numeric
+ceo$female_ceo       <- as.numeric(ceo$female_ceo, na.rm = TRUE)
+ceo$california       <- as.numeric(ceo$california, na.rm = TRUE)
+ceo$financial_sector <- as.numeric(ceo$financial_sector, na.rm = TRUE)
+```
+
+
+```{r}
+summary(ceo[, c("ebitda_margin", "female_ceo", "california",
+                "financial_sector", "employees", "market_cap",
+                "company_age", "year_founded", "revenue")], na.rm = TRUE)
+colSums(!is.na(ceo[, c("ebitda_margin", "female_ceo", "california",
+                        "financial_sector", "employees", "market_cap",
+                        "company_age", "year_founded", "revenue")]))
+cat("Number of Female CEOs:    ", sum(ceo$female_ceo == 1, na.rm = TRUE), "\n")
+cat("Number of California firms:", sum(ceo$california == 1, na.rm = TRUE), "\n")
+cat("Total firms:              ", nrow(ceo), "\n")
+
+```
+```{r}
+hist(ceo$ebitda_margin, 
+     main = "Distribution of EBITDA margin",
+     xlab = "EBITDA margin",
+     xlim = c(-0.5,1), 
+     breaks = 30,
+     col = "lightblue", border = "white")
+```
+```{r}
+variable <- c("ebitda_margin", "female_ceo", "california", "lrevenue", "lemployees", "company_age", "financial_sector")
+
+mean <- sapply(ceo[,c("ebitda_margin", "female_ceo", "california", "lrevenue", "lemployees", "company_age", "financial_sector")], mean, na.rm = TRUE)
+               
+min <- sapply(ceo[,c("ebitda_margin", "female_ceo", "california", "lrevenue", "lemployees", "company_age", "financial_sector")], min, na.rm = TRUE)
+              
+max <- sapply(ceo[,c("ebitda_margin", "female_ceo", "california", "lrevenue", "lemployees", "company_age", "financial_sector")], max, na.rm = TRUE)
+
+sd <- sapply(ceo[, variable], sd, na.rm = TRUE)
+
+data.frame(variable, mean, min, max, sd)
+               
+```
+```{r}
+install.packages("MatchIt")
+library(MatchIt)
+```
+
+
+
+```{r}
+ceo_clean <- na.omit(ceo[, c("ebitda_margin", "female_ceo", "california", "lrevenue", "lemployees", "company_age", "financial_sector")])
+```
+
+
+
+```{r}
+match_vars <- c("lrevenue", "lemployees", "company_age", "financial_sector", "california")
+
+match <- matchit(female_ceo ~ lrevenue + lemployees + company_age + financial_sector + california,
+        data = ceo_clean, 
+        method = "nearest", 
+        distance = "logit", 
+        ratio = 1, 
+        replace = FALSE)
+summary(match)
+```
+
+```{r}
+install.packages("cobalt")
+library(cobalt)
+```
+
+```{r}
+love.plot(match, threshold = 0.05)
+bal.tab(match, thresholds = c(m = 0.05))
+```
+
+```{r}
+matched_ceo <- match.data(match)
+```
+
+```{r}
+matched_model <- lm(ebitda_margin ~ female_ceo + lrevenue + lemployees + company_age + financial_sector + california,
+        data = ceo_clean)
+summary(matched_model)
+```
